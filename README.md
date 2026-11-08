@@ -120,7 +120,8 @@ record isn't the expected size is skipped, not corrupted.
 |---|---|
 | [`waves-bridge.py`](waves-bridge.py) | the patcher |
 | [`tools/fst-inspect.py`](tools/fst-inspect.py) | `events` / `records` / `flags` / `diff` — how all of this was worked out |
-| [`examples/fl`](examples/fl) | launcher that sets the PipeWire bits before starting FL |
+| [`examples/fl`](examples/fl) | minimal launcher that sets the PipeWire bits before starting FL |
+| [`examples/fl-aliases.sh`](examples/fl-aliases.sh) | shell launchers for every prefix, plus `wp` / `wpkill` for prefix state |
 
 ```bash
 # what did ticking that checkbox actually change?

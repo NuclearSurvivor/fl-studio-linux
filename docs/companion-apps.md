@@ -182,3 +182,27 @@ can't draw.
 
 Untested with this pattern: iZotope Product Portal, reFX Cloud, UA Connect,
 Spectrasonics' installers.
+
+---
+
+## Keeping track of the prefixes
+
+Four or five prefixes is enough that "which one am I in" becomes a real source of
+mistakes, and the usual answer — `pgrep -f wineserver` — does not work. wineserver's
+command line carries no prefix; the prefix comes in through the environment. So
+grepping the process list reports every prefix idle, running ones included.
+
+The signal that does work is the socket, whose path wineserver derives from the
+prefix directory's device and inode:
+
+```bash
+d=$(stat -c '%d' "$WINEPREFIX"); i=$(stat -c '%i' "$WINEPREFIX")
+sock="/tmp/.wine-$(id -u)/server-$(printf '%x' "$d")-$(printf '%x' "$i")/socket"
+[ -S "$sock" ] && echo LIVE || echo idle
+```
+
+[`examples/fl-aliases.sh`](../examples/fl-aliases.sh) wraps that as `wp`, along with
+a launcher per application and `wpkill` for clearing a wedged prefix. A stale
+wineserver left over from an earlier install is a common cause of an installer
+behaving differently the second time you run it, and it is invisible until you look
+for it.
