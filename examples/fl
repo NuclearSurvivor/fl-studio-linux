@@ -1,0 +1,20 @@
+#!/bin/bash
+# ~/.local/bin/fl - launch FL Studio with the PipeWire bits already set.
+# chmod +x this and put it on your PATH.
+#
+# Environment variables set before it pass through, which is handy for debugging:
+#   WINEDEBUG=+text fl > /tmp/log 2>&1
+
+export WINEPREFIX="$HOME/flstudio"
+
+# 2-channel remap, so FL doesn't grab aux0..aux3 off a pro-audio profile.
+# Replace <your alsa_input name> with the name from: pactl list short sources
+pactl list short sources | grep -q iface_stereo || \
+  pactl load-module module-remap-source source_name=iface_stereo \
+    master="<your alsa_input name>" channels=2 \
+    master_channel_map=aux0,aux1 channel_map=front-left,front-right >/dev/null 2>&1
+
+# Pin the quantum. Biggest single fix for crackling. Resets on reboot.
+pw-metadata -n settings 0 clock.force-quantum 256 >/dev/null 2>&1
+
+exec wine "$WINEPREFIX/drive_c/Program Files/Image-Line/FL Studio 2025/FL64.exe" "$@"
