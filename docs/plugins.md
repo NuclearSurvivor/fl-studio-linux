@@ -16,25 +16,37 @@ wine-staging 11.21 (wow64), FL Studio Producer Edition v25.2.3 build 5171,
 
 ---
 
-## The rule that predicts everything
+## The two rules that predict everything
 
-It isn't copy protection that breaks under Wine. **It's copy protection that
-needs a separate companion application.**
+### 1. The renderer, not the copy protection
 
-Soundtoys and oeksound Soothe use the *same* licensing tech — PACE/iLok. Soundtoys
-activates with a code typed into the plugin's own window, and it worked first try.
-Soothe needs [iLok License Manager](https://www.ilok.com) running as a separate
-app, and PACE's License Support installer aborts under Wine (the MSI reads the
-prefix as Windows 8.1 regardless of what you set, and fails its launch conditions).
+**A plugin built with JUCE 8 before JUCE added Wine detection draws a blank window.**
+Licensing works, audio works, the editor is white or black. Wine implements neither
+`CreateSwapChainForComposition` nor the DirectComposition calls JUCE 8 needs, and
+neither does DXVK — so there is no configuration that avoids it.
 
-So before buying: **does it activate inside the plugin, or does it need a manager
-app?** That predicts Wine behaviour better than price or publisher.
+This is now the main thing that stops a plugin being usable. Details and diagnosis:
+[JUCE 8 blank windows](graphics.md#juce-8-blank-windows).
 
-Known companion apps that are the blocker, not the plugin: iLok License Manager,
-[Native Access](https://www.native-instruments.com),
-[reFX Cloud](https://refx.com), iZotope Product Portal, UA Connect.
+### 2. Companion apps are an obstacle, not a wall
 
----
+The older rule was "it isn't copy protection that breaks under Wine, it's copy
+protection that needs a separate companion application." That held until it was
+actually tested. Four companion apps, four successes:
+
+| Companion app | Status |
+|---|---|
+| iLok License Manager | works — [ilok.md](ilok.md) |
+| Native Access | works — [kontakt.md](kontakt.md) |
+| Arturia Software Center | works — [companion-apps.md](companion-apps.md#arturia-pigments) |
+| Slate Complete Access Hub | works — [companion-apps.md](companion-apps.md#slate-digital-complete-access-hub) |
+
+They take more work: a separate prefix, symlinks, sometimes a real PowerShell — and
+if the installer is 32-bit, a copy of that PowerShell in `syswow64` as well, or WOW64
+redirection hands it Wine's stub. But they are not the blocker they were assumed to
+be. The general method is in [companion-apps.md](companion-apps.md).
+
+Still untested: iZotope Product Portal, reFX Cloud, UA Connect, Spectrasonics.
 
 ## ✅ Working
 
@@ -128,6 +140,42 @@ itself runs fine under Wine. Full method in [kontakt.md](kontakt.md).
 
 Reaktor 6 Player, Guitar Rig and the rest of Komplete: untested, same pipeline.
 
+### Arturia — 🔧 separate prefix + symlinks
+
+[arturia.com](https://www.arturia.com) · Pigments 7.0.1 ✅
+
+Installs into its own prefix along with Arturia Software Center; standalone renders
+and plays with no configuration. Linked into the DAW it needs **Make bridged** and
+**External window**, or the embedded editor goes transparent on hover and shows
+whatever is behind it. Method in
+[companion-apps.md](companion-apps.md#arturia-pigments).
+
+Arturia's download page offers a macOS `.pkg` and a Windows `.exe`. Take the `.exe`.
+
+### Slate Digital — 🔧 separate prefix + iLok
+
+[slatedigital.com](https://slatedigital.com) · Fresh Air ✅
+
+Complete Access Hub runs under Wine once real PowerShell is in place — including the
+`syswow64` copy, because the installer is 32-bit and WOW64 redirection otherwise
+serves it Wine's stub. Licensing is entirely iLok, so there is no registry to migrate
+between prefixes. Fresh Air loads, renders and processes audio in FL.
+
+Method in [companion-apps.md](companion-apps.md#slate-digital-complete-access-hub).
+The rest of the Complete Access catalogue is untested but goes through these same two
+mechanisms.
+
+### iLok / PACE — 🔧 patched installer
+
+[ilok.com](https://www.ilok.com) · iLok License Manager ✅
+
+Installs and runs under Wine after four changes to the installer, and plugins in a
+*separate* prefix can see its activations — PACE fingerprints hardware, not the
+prefix. Full method in [ilok.md](ilok.md).
+
+This unlocks the whole iLok catalogue for licensing. Whether a given plugin is then
+*usable* depends on rule 1.
+
 ### Image-Line stock — ✅
 
 [image-line.com](https://www.image-line.com) · everything in the All Plugins
@@ -137,49 +185,41 @@ Vital before any of this.
 
 ---
 
-## ❌ Not working
+## ⚠️ Licensed but unusable
 
 ### oeksound Soothe 3
 
-[oeksound.com](https://oeksound.com) · **Installs and activates fine.** The plugin
-itself is not the problem.
+[oeksound.com](https://oeksound.com) · 1.0.5
 
-Two separate failures:
+**Installs, authorises through iLok, processes audio.** The editor draws a blank
+window and that makes it unusable.
 
-1. **iLok License Manager won't install.** PACE's `LicenseSupport.msi` fails its
-   `LaunchConditions` with exit 1603 — `COMPATIBLE_OS_VERSION = False`, because
-   `VersionNT = 603` (Windows 8.1) no matter what `winecfg` reports.
-2. **The UI is a transparent window.** Soothe's editor uses
-   `DxgiFactory::CreateSwapChainForComposition`, which DXVK does not implement.
-   Even with licensing solved, the window draws nothing.
+Cause is [JUCE 8](graphics.md#juce-8-blank-windows), not iLok and not oeksound. Tested
+both with DXVK (white) and without (black) — Wine's own `d3d11` has the same gap. The
+plugin's config file has no renderer toggle.
 
-Not owned here — this was tested with the demo. Untried: Wine 7.0 with `winetricks msxml3 gdiplus d3dx9 d3dx10 d3dx11` and
-ILM 5.6.1, which some reports say works. If you get it, open an issue.
+1.0.5 is the newest version (June 2026) and predates JUCE's Wine-detection fix, so
+this needs a rebuild on oeksound's side. Worth mailing them: it's a JUCE version bump
+and they may not know it affects anyone.
+
+If you want soothe specifically, **soothe 2** predates JUCE 8 and should render.
 
 ---
 
 ## ❓ Untested — expect trouble
 
-All of these need a companion application, so the rule above predicts failure.
-None have actually been tested here, so they're listed as unknown, not broken.
+None of these have been tested here. Since four companion apps now work, read this
+table as "unknown and probably more work," not "broken."
 
 | Plugin | Vendor | Blocker |
 |---|---|---|
-| [Komplete / Massive X / Guitar Rig](https://www.native-instruments.com) | Native Instruments | Native Access |
 | [Nexus 4](https://refx.com) | reFX | reFX Cloud |
 | [Ozone / Neutron / RX](https://www.izotope.com) | iZotope | Product Portal |
 | [UAD Spark / LA-2A / 1176](https://www.uaudio.com) | Universal Audio | UA Connect |
-| [Virtual Mix Rack / FG-X / Fresh Air](https://slatedigital.com) | Slate Digital | Slate Connect |
 | [Omnisphere / Trilian / Keyscape](https://www.spectrasonics.net) | Spectrasonics | own installer + challenge/response |
-| [Melodyne](https://www.celemony.com) | Celemony | iLok License Manager |
-| [Auto-Tune](https://www.antarestech.com) | Antares | iLok License Manager |
+| [Melodyne](https://www.celemony.com) | Celemony | iLok — now solved, worth trying |
+| [Auto-Tune](https://www.antarestech.com) | Antares | iLok — now solved, worth trying |
 | [Plugin Alliance / Brainworx](https://www.plugin-alliance.com) | Plugin Alliance | Installation Manager |
-
-One with reported community success worth trying before writing off:
-
-- **Arturia Pigments** — [arturia.com](https://www.arturia.com) · reported working
-  through [Bottles](https://usebottles.com). Arturia Software Center is the
-  companion app, which is the usual blocker, but people have got round it.
 
 If you get any of these running, **please open an issue** — this table exists to
 stop other people repeating the same dead ends.

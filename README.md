@@ -46,9 +46,19 @@ nothing else. [Full writeup →](docs/fst-format.md)
 304 Waves plugins now load straight from the browser here. No Windows VM, no
 project templates, no round trip.
 
-**Kontakt 8 also runs**, installed into its own prefix and linked into FL's — see
-[kontakt.md](docs/kontakt.md). The trap there is that Waves and Native Instruments
-share one `Service Center` registration folder, so it has to be merged per file.
+**Kontakt 8, Arturia Pigments, Slate Digital and iLok License Manager all run too.**
+Four companion apps that the existing guides list as impossible —
+[Native Access](docs/kontakt.md), [Arturia Software Center and Slate's Complete
+Access Hub](docs/companion-apps.md), and [iLok License Manager](docs/ilok.md). Each
+installs into its own prefix and gets symlinked into FL's. The trap with Kontakt is
+that Waves and Native Instruments share one `Service Center` registration folder, so
+it has to be merged per file, not symlinked.
+
+**The remaining obstacle is rendering, not licensing.** Plugins built with JUCE 8
+before JUCE added Wine detection draw a blank window — Wine implements neither
+`CreateSwapChainForComposition` nor the DirectComposition calls they need, and
+neither does DXVK. That is what stops soothe 3, and the fix has to come from
+upstream. See [JUCE 8 blank windows](docs/graphics.md#juce-8-blank-windows).
 
 ---
 
@@ -95,9 +105,11 @@ record isn't the expected size is skipped, not corrupted.
 |---|---|
 | [**Waves**](docs/waves.md) | the crash, why bridging fixes it, the session-poisoning trap, three ways to make it permanent |
 | [**`.fst` format**](docs/fst-format.md) | the container, event 213, record `id 2`, and a method note about testing on contaminated targets |
-| [**Plugin compatibility**](docs/plugins.md) | what works, what doesn't, what to expect — with the rule that predicts it |
+| [**Plugin compatibility**](docs/plugins.md) | what works, what does not, what to expect — and the two rules that predict it |
 | [**Audio**](docs/audio.md) | PipeWire channel maps, crackling, quantum, realtime priority, latency |
 | [**Graphics**](docs/graphics.md) | check the GPU is alive before blaming Wine; DXVK, and what it doesn't fix |
+| [**iLok / PACE**](docs/ilok.md) | iLok License Manager under Wine — the four installer changes that make it install |
+| [**Companion apps**](docs/companion-apps.md) | the general pattern — Arturia, Slate, PowerShell, and the WOW64 trap |
 | [**Kontakt / NI**](docs/kontakt.md) | Kontakt 8 as a VST3 in a DAW that lives in a *different* Wine prefix, with libraries |
 | [**Cradle Hub**](docs/cradle.md) | blank window, and the `app.cradle` URL scheme |
 | [**Troubleshooting**](docs/troubleshooting.md) | doubled prefixes, the blank missing-files dialog, things not to run |

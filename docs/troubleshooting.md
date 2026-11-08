@@ -99,6 +99,11 @@ search path. Map the Wine drive one level higher and add a subfolder.
 **Can't delete entries in FL's plugin manager** — white entries are FL's locked
 built-in defaults, orange are user-added. Only the orange ones are yours.
 
+**An installer silently does nothing, and the log says `fixme:powershell:wmain stub`**
+— Wine's PowerShell is a stub that exits 0, so the installer's checks "pass" while
+doing nothing. See [companion-apps.md](companion-apps.md#powershell-and-the-wow64-trap),
+and note you must replace the `syswow64` copy too for 32-bit installers.
+
 **A patch to the plugin database seems to do nothing** — FL caches the database at
 startup. Restart it. And make sure you patched the tree inside the prefix, not a
 stale copy.

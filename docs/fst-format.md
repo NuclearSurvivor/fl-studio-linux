@@ -119,6 +119,19 @@ session, and FL was reusing its own in-memory wrapper state.
 plugin you have never loaded, and restart FL between tests, or you can't tell your
 patch from the host's memory of what you did.
 
+## This is not a Waves trick
+
+Record `id 2` holds the wrapper defaults for **any** plugin FL loads. The transplant
+has been used here for two unrelated reasons:
+
+- **Waves** — in-process loading crashes, so every entry needs *Make bridged*
+- **Arturia Pigments** — the embedded editor doesn't composite correctly and goes
+  transparent on hover, so it needs *Make bridged* and *External window*
+
+Same 25 bytes, same command, completely different underlying problems. If a plugin
+needs particular wrapper settings every time you load it, this is how you make that
+the default without clicking.
+
 ## Scope
 
 - Confirmed on FL Studio 2025 v25.2.3 build 5171.

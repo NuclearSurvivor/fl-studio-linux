@@ -91,8 +91,61 @@ trusting a delete.
   still says "dxvk already installed, skipping". Delete that line from the log to
   force a reinstall.
 
+## JUCE 8 blank windows
+
+**This is the biggest remaining obstacle to running plugins under Wine, and it has
+nothing to do with copy protection.**
+
+[JUCE](https://juce.com) is the framework most audio plugins are built with. JUCE 8
+switched to a **Direct2D** renderer on Windows, which needs
+`IDXGIFactory2::CreateSwapChainForComposition` plus DirectComposition's
+`CreateTargetForHwnd`, `SetContent` and `Commit`.
+
+**Wine implements none of them, and neither does DXVK.** A JUCE 8 plugin therefore
+draws a blank window — white, black or flickering depending on how the host
+composites it — while licensing and audio work perfectly.
+
+Tracked as:
+
+- [Wine bug 57833 — JUCE 8 incompatibility](https://list.winehq.org/hyperkitty/list/wine-bugs@list.winehq.org/thread/IM5YOV2KJZK5LUMIO2DXR5YTJJ5KLOBY/)
+- [Wine bug 60636 — dcomp: JUCE 8 plugins flicker](https://bugs.winehq.org/show_bug.cgi?id=60636)
+- [wine-devel: "Is anyone working on dxgi/dcomp - specifically CreateSwapChainForComposition?"](https://list.winehq.org/hyperkitty/list/wine-devel@list.winehq.org/thread/LEBIPKPARJIBWI4XKDZH43Z36XITO4B7)
+  — described there as drawing "blank white", and as a heavy lift nobody has finished
+
+### The fix is upstream, in JUCE
+
+JUCE now **defaults to software rendering when it detects it is running under Wine**
+([discussion](https://forum.juce.com/t/juce8-direct2d-wine-yabridge/64298)). So the
+fix exists — but it lands per plugin, when each vendor rebuilds against a current
+JUCE. There is nothing to configure on your side.
+
+### Diagnosing it
+
+- UI blank, everything else fine → suspect JUCE 8
+- **Removing DXVK doesn't help.** Tested: soothe3 draws white with DXVK and black
+  without it. Wine's own `d3d11` has the same gap, so this is not a DXVK problem to
+  route around.
+- Plugin's own config files won't have a renderer toggle — checked for soothe3, it's
+  version strings only
+
+### What you can do
+
+Ask the vendor to rebuild. It's a JUCE version bump on their side, and they may not
+know. A short, specific mail naming the missing APIs and JUCE's Wine detection is
+much more likely to land than a bug report saying "doesn't work on Linux."
+
+An older version of the same plugin, built before JUCE 8, will usually render fine.
+
+### Known affected
+
+- **oeksound soothe3** (1.0.5, newest as of June 2026) — authorises through iLok and
+  processes audio, editor won't draw
+
+Not affected, for contrast: FabFilter, Soundtoys, Valhalla, Arturia, Native
+Instruments, Waves. Different frameworks or older JUCE.
+
 ## What DXVK does not fix
 
-`DxgiFactory::CreateSwapChainForComposition` is **not implemented by DXVK**. Any
-plugin whose editor uses Direct2D composition draws a transparent window and no
-amount of configuration helps. oeksound Soothe 3 is the known case here.
+`DxgiFactory::CreateSwapChainForComposition` is **not implemented by DXVK** — see
+above. It's also not implemented by Wine, so there's no configuration that avoids
+it.
