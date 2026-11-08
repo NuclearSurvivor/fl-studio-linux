@@ -46,12 +46,16 @@ nothing else. [Full writeup →](docs/fst-format.md)
 304 Waves plugins now load straight from the browser here. No Windows VM, no
 project templates, no round trip.
 
+**Kontakt 8 also runs**, installed into its own prefix and linked into FL's — see
+[kontakt.md](docs/kontakt.md). The trap there is that Waves and Native Instruments
+share one `Service Center` registration folder, so it has to be merged per file.
+
 ---
 
 ## Quick start
 
 ```bash
-git clone https://github.com/NuclearSurvivor/fl-studio-linux
+git clone https://github.com/<you>/fl-studio-linux
 cd fl-studio-linux
 ```
 
@@ -94,6 +98,7 @@ record isn't the expected size is skipped, not corrupted.
 | [**Plugin compatibility**](docs/plugins.md) | what works, what doesn't, what to expect — with the rule that predicts it |
 | [**Audio**](docs/audio.md) | PipeWire channel maps, crackling, quantum, realtime priority, latency |
 | [**Graphics**](docs/graphics.md) | check the GPU is alive before blaming Wine; DXVK, and what it doesn't fix |
+| [**Kontakt / NI**](docs/kontakt.md) | Kontakt 8 as a VST3 in a DAW that lives in a *different* Wine prefix, with libraries |
 | [**Cradle Hub**](docs/cradle.md) | blank window, and the `app.cradle` URL scheme |
 | [**Troubleshooting**](docs/troubleshooting.md) | doubled prefixes, the blank missing-files dialog, things not to run |
 

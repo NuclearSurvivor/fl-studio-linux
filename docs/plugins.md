@@ -116,6 +116,18 @@ scheme registration. Both are in [cradle.md](cradle.md).
 
 The God Particle ✅ · The Spirit ✅ · The Prince ❓ (not owned yet)
 
+### Native Instruments — 🔧 separate prefix + symlinks
+
+[native-instruments.com](https://www.native-instruments.com) · Kontakt 8 Player ✅ ·
+Komplete Start / Analog Dreams ✅
+
+Installs into its own Wine prefix via
+[selimbucher/native-instruments](https://github.com/selimbucher/native-instruments),
+then the plugin and its content tree are linked into the DAW's prefix. Native Access
+itself runs fine under Wine. Full method in [kontakt.md](kontakt.md).
+
+Reaktor 6 Player, Guitar Rig and the rest of Komplete: untested, same pipeline.
+
 ### Image-Line stock — ✅
 
 [image-line.com](https://www.image-line.com) · everything in the All Plugins
@@ -153,7 +165,6 @@ None have actually been tested here, so they're listed as unknown, not broken.
 
 | Plugin | Vendor | Blocker |
 |---|---|---|
-| [Kontakt](https://www.native-instruments.com) | Native Instruments | Native Access |
 | [Komplete / Massive X / Guitar Rig](https://www.native-instruments.com) | Native Instruments | Native Access |
 | [Nexus 4](https://refx.com) | reFX | reFX Cloud |
 | [Ozone / Neutron / RX](https://www.izotope.com) | iZotope | Product Portal |
@@ -164,10 +175,8 @@ None have actually been tested here, so they're listed as unknown, not broken.
 | [Auto-Tune](https://www.antarestech.com) | Antares | iLok License Manager |
 | [Plugin Alliance / Brainworx](https://www.plugin-alliance.com) | Plugin Alliance | Installation Manager |
 
-Two with reported community success worth trying before writing off:
+One with reported community success worth trying before writing off:
 
-- **Kontakt / Native Access** — [selimbucher/native-instruments](https://github.com/selimbucher/native-instruments)
-  and similar projects script the install under Wine.
 - **Arturia Pigments** — [arturia.com](https://www.arturia.com) · reported working
   through [Bottles](https://usebottles.com). Arturia Software Center is the
   companion app, which is the usual blocker, but people have got round it.
