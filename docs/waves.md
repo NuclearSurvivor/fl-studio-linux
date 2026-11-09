@@ -167,3 +167,51 @@ activate there.
   pointed at this in the first place. If you try it, open an issue.
 - Whether automation on bridged instances behaves over a long session
 - Whether any of it survives an FL update
+
+---
+
+## Verify the patch — and mind the hidden folder
+
+Two things bit me hours after I thought this was finished.
+
+**Restoring the hidden entries silently undoes the patch.** Earlier advice (mine included)
+was to move the Waves database entries into a hidden folder so you couldn't misclick into
+a crash. Those copies are *pre-patch*. Move them back and every entry you patched is
+overwritten with an unbridged one. I did exactly this, and an hour later Waves started
+crashing again with the whole database back to 302 of 302 unbridged. Patch the hidden
+folder as well, or delete it once you don't need it.
+
+**Check the end state, not the script's output.** `patched 302` tells you what the script
+wrote. It does not tell you what the database now contains — something else may have
+overwritten it since. This does:
+
+```bash
+cd "$DB"
+mapfile -d '' UNPATCHED < <(
+  grep -rlZa 'WaveShell' . --include='*.fst' |
+  while IFS= read -r -d '' f; do
+    python3 tools/fst-inspect.py flags "$f" 2>/dev/null | grep -qE 'bridged +yes' \
+      || printf '%s\0' "$f"
+  done
+)
+echo "${#UNPATCHED[@]} unpatched of $(grep -rla 'WaveShell' . --include='*.fst' | wc -l)"
+```
+
+Note the null delimiters. Waves filenames contain spaces, and a plain
+`for f in $(grep -rl ...)` splits `Enigma Stereo.fst` into two bogus paths — I wrote that
+bug and spent a minute reading garbage output before noticing.
+
+Zero is the only acceptable answer. Run it before and after any database work.
+
+## Telling the two Waves failures apart
+
+They have different causes and different fixes:
+
+| Dialog | Means | Fix |
+|---|---|---|
+| `Access violation ... in WaveShell1-VST3` | in-process load, plugin isn't bridged at instantiation | bridge it |
+| `crashed while loading its settings` | FL couldn't deserialise the wrapper record — the entry is unpatched or corrupt | check it with `fst-inspect flags`, re-patch |
+| Loads but says DEMO | `WavesLocalServer` isn't running | `pgrep -af WavesLocalServer` |
+
+Either of the first two also poisons the session: every Waves instance after it fails until
+you restart FL.
