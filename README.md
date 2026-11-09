@@ -112,6 +112,7 @@ record isn't the expected size is skipped, not corrupted.
 | [**Companion apps**](docs/companion-apps.md) | the general pattern — Arturia, Slate, PowerShell, and the WOW64 trap |
 | [**Kontakt / NI**](docs/kontakt.md) | Kontakt 8 as a VST3 in a DAW that lives in a *different* Wine prefix, with libraries |
 | [**Cradle Hub**](docs/cradle.md) | blank window, and the `app.cradle` URL scheme |
+| [**The Reddit post**](docs/reddit-post.md) | the whole thing as one narrative, if you'd rather read it start to finish |
 | [**Troubleshooting**](docs/troubleshooting.md) | doubled prefixes, the blank missing-files dialog, things not to run |
 
 ## Tools
