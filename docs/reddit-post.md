@@ -7,11 +7,11 @@ I run FL on Linux full time. I spent about a year believing a serious setup wasn
 
 **Major edit 1.** The first version of this post said Waves only worked by authoring projects in a Windows VM and moving the `.flp` across. That is obsolete. Waves now instantiates normally from the plugin browser — all 304 of them, no VM, no round trip, no template. The Waves section below is rewritten from scratch.
 
-**Major edit 2.** This post used to say iLok License Manager won't install under Wine, and built a prediction rule on top of that: copy protection needing a separate companion app is what breaks. **Both of those were wrong and I've rewritten them.** iLok License Manager installs and runs. So do Native Access, Arturia Software Center and Slate's Complete Access Hub — four for four. Kontakt 8, Arturia Pigments and Slate's Fresh Air all now run in FL here.
+**Major edit 2.** This post used to say iLok License Manager won't install under Wine, and built a prediction rule on that. Both were wrong and are rewritten below. **iLok License Manager, Native Access, Arturia Software Center and Slate's Complete Access Hub all install and run.** Kontakt 8, Pigments and Fresh Air now work in FL here.
 
-The real blocker turned out to be something else entirely: **plugins built with JUCE 8 draw a blank window under Wine**, licensing intact, audio working. That's what actually stops Soothe 3, not iLok. New sections below, and every addition in this round is marked **[edit 2]**.
+The real blocker is elsewhere: **plugins built with JUCE 8 draw a blank window under Wine**, licensing intact, audio working. That's what stops Soothe 3, not iLok. Additions this round are marked **[edit 2]**.
 
-Writing up everything, because most of it isn't documented anywhere and I lost a lot of hours to obstacles that turned out to have one-line answers.
+Almost none of this is documented anywhere. Most of it had one-line answers that cost me hours to find.
 
 ---
 
@@ -249,8 +249,7 @@ echo "${#UNPATCHED[@]} unpatched of $(grep -rla 'WaveShell' . --include='*.fst' 
 ```
 
 Note the null delimiters. Waves filenames contain spaces, and a plain
-`for f in $(grep -rl ...)` splits `Enigma Stereo.fst` into two bogus paths — I wrote that
-bug and spent a minute reading garbage output before noticing.
+`for f in $(grep -rl ...)` splits `Enigma Stereo.fst` into two bogus paths and the output is nonsense.
 
 Zero is the only acceptable answer. Run it before and after any database work.
 
@@ -325,11 +324,9 @@ Neither that guide nor anything else I could find describes the instantiation cr
 
 **Untested:** Nexus 4, iZotope, Universal Audio, Spectrasonics, Plugin Alliance.
 
-### [edit 2] The rule I had here was wrong
+### [edit 2] Correction to the old rule
 
-The old version of this section said: *it isn't copy protection that breaks under Wine, it's copy protection that needs a separate companion application.* I'd tested exactly one companion app, failed to install it, and generalised from a sample of one.
-
-Then I went back and did the others. Four companion apps, four successes:
+The old version of this section said *it isn't copy protection that breaks under Wine, it's copy protection that needs a separate companion application.* That was based on one failed install and it's wrong. Four companion apps, four successes:
 
 | Companion app | Result |
 |---|---|
@@ -388,7 +385,21 @@ After that, signing in shows an "allow this site to open the application" prompt
 
 # [edit 2] Companion apps: iLok, Native Access, Arturia, Slate
 
-The pattern that worked for all four: **install the companion app in its own prefix, then symlink what the plugin needs into the DAW prefix.** Never install a companion app into your DAW prefix directly.
+The pattern that worked for all four:
+
+1. **New prefix per companion app.** `WINEPREFIX=$HOME/.wine-<vendor> wineboot -i`, then
+   `winetricks -q win10`. Never install one into your DAW prefix — they pull in redists,
+   services and sometimes DXVK, and any of those can wreck a working DAW prefix.
+2. **Install and authorise there.** Standalone first. If the standalone won't render,
+   stop — the plugin won't either.
+3. **Find what the plugin actually reads.** Usually three things: the VST3 under
+   `Common Files\VST3`, a registration directory under `Common Files\<vendor>`, and
+   a content/library path.
+4. **Symlink those into the DAW prefix**, one child at a time — never the parent
+   directory, see the Kontakt warning below.
+5. **Check `HKLM\Software` for paths the plugin resolves at load**, and copy those keys
+   across with `wine regedit` if they're missing.
+6. **Rescan in FL**, then bridge it if the editor misbehaves.
 
 ### iLok License Manager
 
@@ -417,7 +428,19 @@ Arturia's download page offers a macOS `.pkg` and a Windows `.exe`. Take the `.e
 
 ### Kontakt
 
-Own prefix, symlink the library folders into FL's. One warning: **Waves and Native Instruments share the `Common Files\Native Instruments\Service Center` registration folder.** Symlinking that directory wholesale replaces your Waves licence files with NI's. Merge it per file instead. I caught this one about two seconds before it stuck.
+Own prefix with Native Access, then link three things into FL's prefix — the VST3, the
+library content, and the registration data:
+
+    NI="$HOME/.wine-ni/drive_c/Program Files"
+    FL="$HOME/Image-Line/drive_c/Program Files"
+    ln -s "$NI/Common Files/VST3/Kontakt 8.vst3" "$FL/Common Files/VST3/"
+    ln -s "$NI/Native Instruments" "$FL/Native Instruments"
+
+Native Access writes library paths into `HKLM\Software\Native Instruments\<library>`.
+If FL's prefix doesn't have those keys Kontakt loads with an empty library browser, so
+export them from the NI prefix and import them into FL's.
+
+One warning: **Waves and Native Instruments share the `Common Files\Native Instruments\Service Center` registration folder.** Symlinking that directory wholesale replaces your Waves licence files with NI's. Merge it per file instead. This nearly cost me ~70 Waves licence files.
 
 `komplete.db3` is SQLite with WAL, so only one Kontakt instance can hold it. NTKDaemon serves over localhost, so one instance covers every prefix — a second one just exits.
 
@@ -647,11 +670,9 @@ And the VM is gone now. It existed purely as a one-time authoring step for Waves
 
 # Is it worth it?
 
-Absolutely! Audio is clean, latency is usable, everything animates. I tracked a full vocal chain with no issues, using plugins from Waves, Soundtoys, FabFilter and Cradle.
+Yes. Audio is clean, latency is usable, every UI animates. I track full vocal chains with Waves, Soundtoys, FabFilter and Cradle.
 
-The honest summary: nothing here was hard once I knew the answer. The hard part was that almost none of it is online anywhere, and Wine's stderr — which nobody enjoys reading — was right every single time.
-
-**[edit 2]** And the thing I'd most want someone else to take from this: the one rule in the original post that sounded the most useful was the one I'd tested least. I'd failed to install a single companion app and turned that into a law about all of them. Going back and actually testing the other four is what opened up Kontakt, Arturia and Slate. If something in here reads as a confident general rule, check how many cases it's standing on.
+Nothing here was hard once I knew the answer. The hard part was that none of it is online, and Wine's stderr — which nobody enjoys reading — was right every single time.
 
 Everything is in the repo: [github.com/NuclearSurvivor/fl-studio-linux](https://github.com/NuclearSurvivor/fl-studio-linux)
 
